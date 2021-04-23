@@ -22,8 +22,6 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export function AddNews({ newsID, setNewsID }) {
-  const [cookieJWT, setCookieJWT, removeCookieJWT] = useCookies(["jwt"]);
-
   const classes = useStyles();
   const [title, setTitle] = useState("");
   const [shortDes, setShort] = useState("");
@@ -57,12 +55,12 @@ export function AddNews({ newsID, setNewsID }) {
     event.preventDefault();
     let date = new Date().toLocaleString().replace(/(.*)\D\d+/, "$1");
     const data = {
-      title: title,
-      shortDescription: shortDes,
-      description: description,
-      image: image,
-      banner_image: banner,
-      date: date,
+      Title: title,
+      Short_description: shortDes,
+      Description: description,
+      Image: image,
+      Banner_image: banner,
+      Date: date,
     };
     console.log(data);
     addNews(data);
@@ -70,15 +68,13 @@ export function AddNews({ newsID, setNewsID }) {
   };
 
   async function addNews(news) {
-    const bearer = "Bearer " + cookieJWT["jwt"].jwtToken;
-    const response = await fetch("http://localhost:8000/api/news", {
+    const response = await fetch("https://localhost:44305/api/News", {
       method: "POST",
       mode: "cors",
       cache: "no-cache",
       credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
-        Authorization: bearer,
       },
       redirect: "follow",
       referrerPolicy: "no-referrer",

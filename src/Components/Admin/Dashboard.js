@@ -231,7 +231,7 @@ export function Dashboard() {
                     <Articles />
                   </Route>
                   <Route path="/admin/managegenres">
-                    <Genres />
+                    <Genres newsID={newsID} setNewsID={setNewsID}/>
                   </Route>
                   <Route path="/admin/managealbums">
                     <Albums />

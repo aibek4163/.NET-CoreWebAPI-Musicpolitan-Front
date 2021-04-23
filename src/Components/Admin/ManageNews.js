@@ -14,6 +14,13 @@ import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
+import {
+  DataGrid,
+  GridRowsProp,
+  GridColDef,
+  GridApi,
+  GridToolbar,
+} from "@material-ui/data-grid";
 
 import { useCookies } from "react-cookie";
 
@@ -49,8 +56,6 @@ const useStyles = makeStyles((theme) => ({
 
 export function News({ newsID, setNewsID }) {
   const [listNews, setNews] = useState([]);
-  const [cookieJWT, setCookieJWT, removeCookieJWT] = useCookies(["jwt"]);
-  const bearer = "Bearer " + cookieJWT["jwt"].jwtToken;
 
   const [title, setTitle] = useState("");
   const [shortDes, setShort] = useState("");
@@ -70,11 +75,10 @@ export function News({ newsID, setNewsID }) {
   };
 
   async function loadNews() {
-    let response = await fetch("http://localhost:8000/api/news", {
+    let response = await fetch("https://localhost:44305/api/News", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: bearer,
       },
     });
     if (response.status === 200) {
@@ -89,14 +93,13 @@ export function News({ newsID, setNewsID }) {
   }, [newsID]);
 
   async function DeleteNews(obj) {
-    const response = await fetch("http://localhost:8000/api/news/", {
+    const response = await fetch("https://localhost:44305/api/News", {
       method: "DELETE",
       mode: "cors",
       cache: "no-cache",
       credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
-        Authorization: bearer,
       },
       redirect: "follow",
       referrerPolicy: "no-referrer",
@@ -115,94 +118,166 @@ export function News({ newsID, setNewsID }) {
     handleClickOpen();
   };
 
+  // const rows: GridRowsProp = [
+  //   { id: 1, col1: "Hello", col2: "World" },
+  //   { id: 2, col1: "XGrid", col2: "is Awesome" },
+  //   { id: 3, col1: "Material-UI", col2: "is Amazing" },
+  //   listNews.map((row) => ({
+  //     id: row.id,
+  //     col1: row.title,
+  //     col2: row.short_description,
+  //   })),
+  // ];
+
+  const columns: GridColDef[] = [
+    { field: "id", headerName: "ID", width: 100, editable: true },
+    { field: "title", headerName: "Title", width: 300, editable: true },
+    {
+      field: "short_description",
+      headerName: "Short Description",
+      width: 300,
+      editable: true,
+    },
+    // { field: "description", headerName: "Description", width: 150 },
+    { field: "date", headerName: "Date", width: 150 },
+    {
+      field: "options",
+      headerName: "Options",
+      width: 200,
+
+      renderCell: (params: GridCellParams) => {
+        const api: GridApi = params.api;
+        const fields = api
+          .getAllColumns()
+          .map((c) => c.field)
+          .filter((c) => c !== "__check__" && !!c);
+        const thisRow = {};
+
+        fields.forEach((f) => {
+          thisRow[f] = params.getValue(f);
+        });
+
+        return (
+          <>
+            <Button href={`/admin/editNews/${thisRow.id}`} color="primary">
+              EDIT
+            </Button>
+            <Button
+              href="#text-buttons"
+              color="primary"
+              onClick={() => {
+                openInPopup(thisRow);
+              }}
+            >
+              DELETE
+            </Button>
+          </>
+        );
+        //return alert(JSON.stringify(thisRow, null, 4));
+      },
+    },
+  ];
+
   return (
-    <React.Fragment>
+    <div style={{ height: 500, width: "100%" }}>
       <Button>
         <Link variant="contained" color="primary" to="/admin/addnews">
           ADD FRESH NEWS
         </Link>
       </Button>
-      <Title>News</Title>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell>ID</TableCell>
-            <TableCell>Title</TableCell>
-            <TableCell>Short Description</TableCell>
-            <TableCell>Image</TableCell>
-            <TableCell>Date</TableCell>
-            <TableCell align="right">Options</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {listNews.map((row) => (
-            <TableRow key={row.id}>
-              <TableCell>{row.id}</TableCell>
-              <TableCell>{row.title}</TableCell>
-              <TableCell>{row.shortDescription}</TableCell>
-              <TableCell>
-                <img width="10%" src={row.image} alt="" />
-              </TableCell>
-              <TableCell width="10%">{row.date}</TableCell>
-              <TableCell align="right">
-                {/* <Link to={`/admin/editNews/${row.id}`}>EDIT</Link> */}
-                <Button href={`/admin/editNews/${row.id}`} color="primary">
-                  EDIT
-                </Button>
-                <Button
-                  href="#text-buttons"
-                  color="primary"
-                  onClick={() => {
-                    openInPopup(row);
-                  }}
-                >
-                  DELETE
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="form-dialog-title"
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle id="form-dialog-title">Deleting</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure to delete this News <bold>"{item.title}"</bold>
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} color="primary">
-            Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              DeleteNews(item);
-            }}
-            color="secondary"
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <div className={classes.seeMore}>
-        <Link color="primary" href="#" onClick={preventDefault}>
-          See more orders
-        </Link>
-      </div>
-    </React.Fragment>
+      <DataGrid
+        rows={listNews}
+        columns={columns}
+        pageSize={2}
+        components={{
+          Toolbar: GridToolbar,
+        }}
+      />
+    </div>
+    // <React.Fragment>
+    //   <Button>
+    //     <Link variant="contained" color="primary" to="/admin/addnews">
+    //       ADD FRESH NEWS
+    //     </Link>
+    //   </Button>
+    //   <Title>News</Title>
+    //   <Table size="small">
+    //     <TableHead>
+    //       <TableRow>
+    //         <TableCell>ID</TableCell>
+    //         <TableCell>Title</TableCell>
+    //         <TableCell>Short Description</TableCell>
+    //         <TableCell>Image</TableCell>
+    //         <TableCell>Date</TableCell>
+    //         <TableCell align="right">Options</TableCell>
+    //       </TableRow>
+    //     </TableHead>
+    //     <TableBody>
+    //       {listNews.map((row) => (
+    //         <TableRow key={row.id}>
+    //           <TableCell>{row.id}</TableCell>
+    //           <TableCell>{row.title}</TableCell>
+    //           <TableCell>{row.short_description}</TableCell>
+    //           <TableCell>
+    //             <img width="10%" src={row.image} alt="" />
+    //           </TableCell>
+    //           <TableCell width="10%">{row.date}</TableCell>
+    //           <TableCell align="right">
+    //             {/* <Link to={`/admin/editNews/${row.id}`}>EDIT</Link> */}
+    //             <Button href={`/admin/editNews/${row.id}`} color="primary">
+    //               EDIT
+    //             </Button>
+    //             <Button
+    //               href="#text-buttons"
+    //               color="primary"
+    //               onClick={() => {
+    //                 openInPopup(row);
+    //               }}
+    //             >
+    //               DELETE
+    //             </Button>
+    //           </TableCell>
+    //         </TableRow>
+    //       ))}
+    //     </TableBody>
+    //   </Table>
+    //   <Dialog
+    //     open={open}
+    //     onClose={handleClose}
+    //     aria-labelledby="form-dialog-title"
+    //     maxWidth="sm"
+    //     fullWidth
+    //   >
+    //     <DialogTitle id="form-dialog-title">Deleting</DialogTitle>
+    //     <DialogContent>
+    //       <DialogContentText>
+    //         Are you sure to delete this News <bold>"{item.title}"</bold>
+    //       </DialogContentText>
+    //     </DialogContent>
+    //     <DialogActions>
+    //       <Button onClick={handleClose} color="primary">
+    //         Cancel
+    //       </Button>
+    //       <Button
+    //         onClick={() => {
+    //           DeleteNews(item);
+    //         }}
+    //         color="secondary"
+    //       >
+    //         Delete
+    //       </Button>
+    //     </DialogActions>
+    //   </Dialog>
+    //   <div className={classes.seeMore}>
+    //     <Link color="primary" href="#" onClick={preventDefault}>
+    //       See more orders
+    //     </Link>
+    //   </div>
+    // </React.Fragment>
   );
 }
 
 export function EditNews({ newsID, setNewsID }) {
-  const [cookieJWT, setCookieJWT, removeCookieJWT] = useCookies(["jwt"]);
-  const bearer = "Bearer " + cookieJWT["jwt"].jwtToken;
-
   const classes = useStyles();
   const [title, setTitle] = useState("");
   const [shortDes, setShort] = useState("");
@@ -217,18 +292,17 @@ export function EditNews({ newsID, setNewsID }) {
 
   async function setData(data) {
     setTitle(data.title);
-    setShort(data.shortDescription);
+    setShort(data.short_description);
     setDescription(data.description);
     setImage(data.image);
     setBaner(data.banner_image);
   }
 
   async function GetNewsById() {
-    let response = await fetch("http://localhost:8000/api/news/" + news_id, {
+    let response = await fetch("https://localhost:44305/api/News/" + news_id, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: bearer,
       },
     });
     let data = await response.json();
@@ -266,7 +340,7 @@ export function EditNews({ newsID, setNewsID }) {
     const data = {
       id: news_id,
       title: title,
-      shortDescription: shortDes,
+      short_description: shortDes,
       description: description,
       image: image,
       banner_image: banner,
@@ -292,14 +366,13 @@ export function EditNews({ newsID, setNewsID }) {
   }
 
   async function DeleteNews(data) {
-    const response = await fetch("http://localhost:8000/api/news", {
+    const response = await fetch("https://localhost:44305/api/News", {
       method: "DELETE",
       mode: "cors",
       cache: "no-cache",
       credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
-        Authorization: bearer,
       },
       redirect: "follow",
       referrerPolicy: "no-referrer",
@@ -310,15 +383,13 @@ export function EditNews({ newsID, setNewsID }) {
   }
 
   async function UpdateNews(news) {
-    const bearer = "Bearer " + cookieJWT["jwt"].jwtToken;
-    const response = await fetch("http://localhost:8000/api/news", {
+    const response = await fetch("https://localhost:44305/api/News", {
       method: "PUT",
       mode: "cors",
       cache: "no-cache",
       credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
-        Authorization: bearer,
       },
       redirect: "follow",
       referrerPolicy: "no-referrer",
